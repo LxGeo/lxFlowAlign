@@ -24,7 +24,9 @@ def rasterize_from_profile(geometry_iter, c_profile, burn_value):
             for g in geometry_iter:
                 yield (g,burn_value)
     
-    out_dtype = burn_value.dtype if type(burn_value) is np.ndarray else type(burn_value)
+    #out_dtype = burn_value.dtype if type(burn_value) is np.ndarray else type(burn_value)
+    #out_dtype = type(burn_value) if type(burn_value) == int or float else burn_value.dtype
+    out_dtype = c_profile["dtype"]
     out_raster = rasterize(geom_burn_iter(geometry_iter, burn_value),
                      (c_profile["height"], c_profile["width"]),
                      fill=0,

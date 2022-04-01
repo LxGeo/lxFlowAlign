@@ -5,7 +5,8 @@ Created on Mon Mar 14 12:44:32 2022
 @author: cherif
 """
 
-from pysal.lib.weights import DistanceBand
+#from pysal.lib.weights import DistanceBand
+from libpysal.weights import DistanceBand
 import geopandas as gpd
 import numpy as np
 from shapely.affinity import translate

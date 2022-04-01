@@ -30,7 +30,7 @@ def generate_fake_data(input_gdf, raster_extents=None):
     if not raster_extents:
         raster_extents = get_common_extents(input_gdf.total_bounds, gdf_disaligned.total_bounds)
     
-    rasterized_profile = extents_to_profile(raster_extents, crs=input_gdf.crs)
+    rasterized_profile = extents_to_profile(raster_extents, crs=input_gdf.crs, dtype=rio.uint8)
     flow_profile = extents_to_profile(raster_extents, crs=input_gdf.crs, count=2, dtype=np.float32)
     
     bin_raster_1 = rasterize_from_profile(input_gdf.geometry, rasterized_profile, 1)
