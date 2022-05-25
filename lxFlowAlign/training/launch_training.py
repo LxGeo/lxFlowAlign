@@ -47,12 +47,12 @@ def main(arch, train_data_dir, val_data_dir, ckpt_dir, log_dir, custom_model_cfg
     ## data loaders
     train_dataset = MultiDatasets( (OptFlowRasterDataset(
         os.path.join(train_data_dir, sub_folder)) for sub_folder in os.listdir(train_data_dir)))
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=3, shuffle=True, drop_last=True)
     train_dataloader = train_dataloader
 
     valid_dataset = MultiDatasets( (OptFlowRasterDataset(
         os.path.join(val_data_dir, sub_folder)) for sub_folder in os.listdir(val_data_dir)))    
-    valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True)
+    valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True)
     valid_dataloader = valid_dataloader
 
     light_model = light_model.cuda()
