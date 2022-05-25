@@ -15,7 +15,7 @@ from lxFlowAlign.utils.spatial_utils import extents_to_profile, get_common_exten
 from lxFlowAlign.dataset.fake_disalignment import disalign_dataset
 from lxFlowAlign.utils.rasterization_utils import rasterize_from_profile
 
-def generate_fake_data(input_gdf, raster_extents=None):
+def generate_fake_data(input_gdf, raster_extents=None, resolution=0.5):
     """
     Given input geodataframe apply fake noise to disalign it.
     Results in (
@@ -30,14 +30,14 @@ def generate_fake_data(input_gdf, raster_extents=None):
     if not raster_extents:
         raster_extents = get_common_extents(input_gdf.total_bounds, gdf_disaligned.total_bounds)
     
-    rasterized_profile = extents_to_profile(raster_extents, crs=input_gdf.crs, dtype=rio.uint8)
-    flow_profile = extents_to_profile(raster_extents, crs=input_gdf.crs, count=2, dtype=np.float32)
+    rasterized_profile = extents_to_profile(raster_extents, gsd=resolution, crs=input_gdf.crs, dtype=rio.uint8)
+    flow_profile = extents_to_profile(raster_extents, gsd=resolution, crs=input_gdf.crs, count=2, dtype=np.float32)
     
     bin_raster_1 = rasterize_from_profile(input_gdf.geometry, rasterized_profile, 1)
     bin_raster_2 = rasterize_from_profile(gdf_disaligned.geometry, rasterized_profile, 1)
     
-    dispx = rasterize_from_profile(input_gdf.geometry, flow_profile, gdf_disaligned.disp_x.values)
-    dispy = rasterize_from_profile(input_gdf.geometry, flow_profile, gdf_disaligned.disp_y.values)
+    dispx = rasterize_from_profile(gdf_disaligned.geometry, flow_profile, gdf_disaligned.disp_x.values / -resolution)
+    dispy = rasterize_from_profile(gdf_disaligned.geometry, flow_profile, gdf_disaligned.disp_y.values / resolution)
     
     flow = np.stack([dispx, dispy])
     bin_raster_1 = np.expand_dims(bin_raster_1,0)
