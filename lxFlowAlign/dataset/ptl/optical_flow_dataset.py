@@ -10,6 +10,7 @@ import rasterio as rio
 import torch
 from torch.utils.data import Dataset
 from LxGeoPyLibs.vision.image_transformation import Trans_Identity
+import multiprocessing 
 
 class RasterRegister(dict):
 
@@ -22,9 +23,11 @@ class RasterRegister(dict):
             v.close()
 
 rasters_map=RasterRegister()
+lock = multiprocessing.Lock()
 
 class OptFlowRasterDataset(Dataset):
-        
+    
+    READ_RETRY_COUNT = 4
 
     def __init__(self, image1_path=None, image2_path=None, optflow_path=None,
                  augmentation_transforms=None,preprocessing=None, patch_size=(256,256), patch_overlap=(100,100)):
@@ -87,9 +90,17 @@ class OptFlowRasterDataset(Dataset):
         window_y_start = self.window_y_starts[window_idx%len(self.window_y_starts)]
         c_window = rio.windows.Window(window_x_start, window_y_start, *self.patch_size )
         
-        img1 = rasters_map[self.image1_path].read(window=c_window) 
-        img2 = rasters_map[self.image2_path].read(window=c_window)
-        flow = rasters_map[self.optflow_path].read(window=c_window) 
+        lock.acquire()
+        for _ in range(self.READ_RETRY_COUNT):
+            try:
+                img1 = rasters_map[self.image1_path].read(window=c_window) 
+                img2 = rasters_map[self.image2_path].read(window=c_window)
+                flow = rasters_map[self.optflow_path].read(window=c_window)
+                break
+            except rio.errors.RasterioIOError as e:
+                lock.release()
+                raise e
+        lock.release()
         
         c_trans = self.augmentation_transforms[transform_idx]
         img1, flow = c_trans(img1, flow)
@@ -99,8 +110,8 @@ class OptFlowRasterDataset(Dataset):
             img1 = self.preprocessing(img1)
             img2 = self.preprocessing(img2)
         
-        img1 = torch.from_numpy(img1).float() * 255
-        img2 = torch.from_numpy(img2).float() * 255
+        img1 = torch.from_numpy(img1).float() - 0.5
+        img2 = torch.from_numpy(img2).float() - 0.5
         flow = torch.from_numpy(flow).float()
         
         # valid_mask to flow
