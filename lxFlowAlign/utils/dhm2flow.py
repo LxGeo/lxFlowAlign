@@ -18,16 +18,16 @@ def main(input_dhm_path, im1_imd, im2_imd, out_flow):
 
     with rio.open(input_dhm_path) as in_dst:
         out_profile = in_dst.profile.copy()
-        img_resolution = out_profile["transform"][0]
+        x_resolution = out_profile["transform"][0]
+        y_resolution = out_profile["transform"][4]
         img_array = in_dst.read()
 
     imd1 = IMetaData(im1_imd)
     imd2 = IMetaData(im2_imd)
 
-    epipolarity_angle = formulas.compute_rotation_angle(imd1.satAzimuth(), imd1.satElevation(), imd2.satAzimuth(), imd2.satElevation())
-    x_flow, y_flow = formulas.compute_axis_displacement_ratios(epipolarity_angle)
+    x_flow, y_flow = formulas.compute_roof2roof_constants(imd1.satAzimuth(), imd1.satElevation(), imd2.satAzimuth(), imd2.satElevation())
 
-    out_image = np.concatenate( [img_array*x_flow/img_resolution, img_array*y_flow/img_resolution ] )
+    out_image = np.concatenate( [img_array*x_flow/x_resolution, img_array*y_flow/y_resolution ] )
 
     out_image[out_image>100]=0
     out_image[out_image<-100]=0
