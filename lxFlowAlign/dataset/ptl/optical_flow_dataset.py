@@ -99,7 +99,6 @@ class OptFlowRasterDataset(Dataset):
                 break
             except rio.errors.RasterioIOError as e:
                 lock.release()
-                raise e
         lock.release()
         
         c_trans = self.augmentation_transforms[transform_idx]
@@ -110,12 +109,21 @@ class OptFlowRasterDataset(Dataset):
             img1 = self.preprocessing(img1)
             img2 = self.preprocessing(img2)
         
-        img1 = torch.from_numpy(img1).float() - 0.5
-        img2 = torch.from_numpy(img2).float() - 0.5
+        img1 = torch.from_numpy(img1).float() 
+        img2 = torch.from_numpy(img2).float()
         flow = torch.from_numpy(flow).float()
         
         # valid_mask to flow
         flow = torch.cat((flow, img1), dim=0)
 
         return (img1, img2), flow
-        
+
+
+def worker_init_fn(worker_id):
+    w_multi_dst = torch.utils.data.get_worker_info().dataset.datasets
+    for w_dst in w_multi_dst:
+        rasters_map.update({
+            w_dst.image1_path: rio.open(w_dst.image1_path),
+            w_dst.image2_path: rio.open(w_dst.image2_path),
+            w_dst.optflow_path: rio.open(w_dst.optflow_path)
+        })
