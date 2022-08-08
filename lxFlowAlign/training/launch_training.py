@@ -15,10 +15,9 @@ from ezflow.engine import get_training_cfg
 from ezflow.models import get_default_model_cfg
 from ezflow.data.dataloader.device_dataloader import DeviceDataLoader
 from LxGeoPyLibs.dataset.multi_dataset import MultiDatasets
-from lxFlowAlign.dataset.ptl.optical_flow_dataset import OptFlowRasterDataset
+from lxFlowAlign.dataset.ptl.optical_flow_dataset import OptFlowRasterDataset, worker_init_fn
 
 import pytorch_lightning as pl
-
 
 
 
@@ -47,12 +46,12 @@ def main(arch, train_data_dir, val_data_dir, ckpt_dir, log_dir, custom_model_cfg
     ## data loaders
     train_dataset = MultiDatasets( (OptFlowRasterDataset(
         os.path.join(train_data_dir, sub_folder)) for sub_folder in os.listdir(train_data_dir)))
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=3, shuffle=True, drop_last=True)
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=1, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     train_dataloader = train_dataloader
 
     valid_dataset = MultiDatasets( (OptFlowRasterDataset(
         os.path.join(val_data_dir, sub_folder)) for sub_folder in os.listdir(val_data_dir)))    
-    valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True)
+    valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     valid_dataloader = valid_dataloader
 
     light_model = light_model.cuda()
