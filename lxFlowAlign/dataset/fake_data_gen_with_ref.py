@@ -9,7 +9,17 @@ from lxFlowAlign.utils.spatial_utils import extents_to_profile, get_common_exten
 from lxFlowAlign.dataset.fake_disalignment import disalign_dataset
 from lxFlowAlign.utils.rasterization_utils import rasterize_from_profile
 
-def generate_fake_data(input_gdf, raster_extents):
+from skimage import morphology
+def binary_to_multiclass(x):
+        """
+        function used to transform building binary map to 3 classes (inner, countour, outer)
+        """
+        inner_map = morphology.erosion(x, morphology.square(5))
+        contour_map = x-inner_map
+        background_map = np.ones_like(contour_map); background_map-=contour_map;background_map-=inner_map;
+        return np.stack([background_map, inner_map, contour_map])
+
+def generate_fake_data(input_gdf, raster_extents, resolution=0.5):
     """
     Given input geodataframe apply fake noise to disalign it.
     Results in (
@@ -18,19 +28,25 @@ def generate_fake_data(input_gdf, raster_extents):
         ) each with its respective raster profile
     """
 
-    rasterized_profile = extents_to_profile(raster_extents, crs=input_gdf.crs, dtype=rio.uint8)
+    rasterized_profile = extents_to_profile(raster_extents, crs=input_gdf.crs, count=3, dtype=rio.uint8)
     flow_profile = extents_to_profile(raster_extents, crs=input_gdf.crs, count=2, dtype=np.float32)
     
     gdf_disaligned = disalign_dataset(input_gdf)
     
-    bin_raster_2 = rasterize_from_profile(gdf_disaligned.geometry, rasterized_profile, 1)
+    bin_raster_2_inner = rasterize_from_profile(gdf_disaligned.geometry, rasterized_profile, 1)
+    bin_raster_2_contour = rasterize_from_profile(gdf_disaligned.geometry.boundary.buffer(0.5), rasterized_profile, 1)
+    # clean inner map
+    bin_raster_2_inner[bin_raster_2_contour>0]=0
+    bin_raster_2_background = np.ones_like(bin_raster_2_inner)
+    # clean background map
+    bin_raster_2_background[bin_raster_2_contour>0]=0;bin_raster_2_background[bin_raster_2_inner>0]=0
+    bin_raster_2= np.stack([bin_raster_2_background, bin_raster_2_inner, bin_raster_2_contour])
     
-    dispx = rasterize_from_profile(input_gdf.geometry, flow_profile, gdf_disaligned.disp_x.values)
-    dispy = rasterize_from_profile(input_gdf.geometry, flow_profile, gdf_disaligned.disp_y.values)
+    dispx = rasterize_from_profile(gdf_disaligned.geometry, flow_profile, gdf_disaligned.disp_x.values / -resolution)
+    dispy = rasterize_from_profile(gdf_disaligned.geometry, flow_profile, gdf_disaligned.disp_y.values/ resolution)
     
     flow = np.stack([dispx, dispy])
-    
-    bin_raster_2 = np.expand_dims(bin_raster_2,0)    
+       
     return (bin_raster_2, rasterized_profile), (flow, flow_profile)
 
 
