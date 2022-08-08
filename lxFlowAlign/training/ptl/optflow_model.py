@@ -25,12 +25,13 @@ class lightningOptFlowModel(pl.LightningModule):
         
         self.arch=arch
         self.cfg = cfg
+        self.in_channels = 3# self.cfg.ENCODER.FEATURE.IN_CHANNELS or self.cfg.ENCODER.IN_CHANNELS
         
         self.model = build_model(self.arch, cfg=self.cfg)
 
-        if self.cfg.CRITERION.CUSTOM:
+        if hasattr(self.cfg.CRITERION, "CUSTOM"):
             criterion_params={}
-            if "PARAMS" in self.cfg.CRITERION: criterion_params = self.cfg.CRITERION.PARAMS.to_dict()
+            if hasattr(self.cfg.CRITERION, "PARAMS"): criterion_params = self.cfg.CRITERION.PARAMS.to_dict()
             self.loss_fn = FUNCTIONAL_REGISTRY.get(self.cfg.CRITERION.NAME)(**criterion_params)
         else:
             self.loss_fn = loss_registry.get(self.cfg.CRITERION.NAME)()
@@ -43,6 +44,7 @@ class lightningOptFlowModel(pl.LightningModule):
     
     def training_step(self, train_batch, batch_idx):
         x, y = train_batch
+        x = [im[:,:self.in_channels,:,:] for im in x]
         # remove valid band if needed
         if not self.cfg.CRITERION.CUSTOM:
             y=y[:, :2, :, :]
@@ -53,6 +55,7 @@ class lightningOptFlowModel(pl.LightningModule):
     
     def validation_step(self, val_batch, batch_idx):
         x, y = val_batch
+        x = [im[:,:self.in_channels,:,:] for im in x]
         # remove valid band if needed
         if not self.cfg.CRITERION.CUSTOM:
             y=y[:, :2, :, :]
