@@ -63,7 +63,11 @@ class lightningOptFlowModel(pl.LightningModule):
         loss = self.loss_fn(y_hat, y)
         self.log("val_loss", loss, on_step=True, on_epoch=True,)
         #return loss
-
+    
+    def predict_step(self, batch, batch_idx: int = None, dataloader_idx: int = 0):
+        self.model.training = False
+        return self.forward(batch)
+    
     def on_after_backward(self):
         """"""
         return
