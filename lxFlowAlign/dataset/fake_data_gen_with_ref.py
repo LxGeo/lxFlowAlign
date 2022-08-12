@@ -5,9 +5,9 @@ import geopandas as gpd
 import rasterio as rio
 from rasterio import mask
 from shapely.geometry import box
-from lxFlowAlign.utils.spatial_utils import extents_to_profile, get_common_extents
+from LxGeoPyLibs.geometry.utils_rio import extents_to_profile
 from lxFlowAlign.dataset.fake_disalignment import disalign_dataset
-from lxFlowAlign.utils.rasterization_utils import rasterize_from_profile
+from LxGeoPyLibs.geometry.rasterizers import rasterize_from_profile
 
 from skimage import morphology
 def binary_to_multiclass(x):

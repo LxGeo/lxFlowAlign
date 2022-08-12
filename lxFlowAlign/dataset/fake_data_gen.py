@@ -11,9 +11,10 @@ import numpy as np
 import geopandas as gpd
 import rasterio as rio
 from shapely.geometry import box
-from lxFlowAlign.utils.spatial_utils import extents_to_profile, get_common_extents
+from LxGeoPyLibs.geometry.utils_rio import extents_to_profile
+from LxGeoPyLibs.geometry import get_common_extents
 from lxFlowAlign.dataset.fake_disalignment import disalign_dataset
-from lxFlowAlign.utils.rasterization_utils import rasterize_from_profile
+from LxGeoPyLibs.geometry.rasterizers import rasterize_from_profile
 
 def generate_fake_data(input_gdf, raster_extents=None, resolution=0.5):
     """
