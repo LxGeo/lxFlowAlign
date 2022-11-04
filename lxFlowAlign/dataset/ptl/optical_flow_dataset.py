@@ -4,7 +4,7 @@ Created on Mon Mar 14 18:16:47 2022
 
 @author: cherif
 """
-
+from lxFlowAlign import _logger
 import os
 import rasterio as rio
 import torch
@@ -38,6 +38,8 @@ class OptFlowRasterDataset(Dataset):
             self.image1_path = os.path.join(in_dir, "image_1.tif"); self.images_path_list.append(self.image1_path)
             self.image2_path = os.path.join(in_dir, "image_2.tif"); self.images_path_list.append(self.image2_path)
             self.optflow_path = os.path.join(in_dir, "flow.tif"); self.images_path_list.append(self.optflow_path)
+        else:
+            self.images_path_list = [image1_path, image2_path, optflow_path]
         
         assert all([os.path.isfile(f) for f in self.images_path_list]), "One of optFlow rasters are missing!"
         
@@ -98,12 +100,13 @@ class OptFlowRasterDataset(Dataset):
                 flow = rasters_map[self.optflow_path].read(window=c_window)
                 break
             except rio.errors.RasterioIOError as e:
-                lock.release()
+                _logger.error(f"Unable to read window {c_window}")
+                raise Exception("Dataset loading error")
         lock.release()
         
         c_trans = self.augmentation_transforms[transform_idx]
-        img1, flow = c_trans(img1, flow)
-        img2, _ = c_trans(img2, flow)
+        img1, flow, _ = c_trans(img1, flow)
+        img2, _, _ = c_trans(img2, flow)
         
         if self.preprocessing:
             img1 = self.preprocessing(img1)
