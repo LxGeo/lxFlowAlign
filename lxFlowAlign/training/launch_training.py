@@ -29,7 +29,8 @@ import pytorch_lightning as pl
 @click.argument('log_dir', type=click.Path(exists=False))
 @click.option('--custom_model_cfg', required=True, type=click.Path(exists=True))
 @click.option('--custom_training_cfg', required=True, type=click.Path(exists=True))
-def main(arch, train_data_dir, val_data_dir, ckpt_dir, log_dir, custom_model_cfg, custom_training_cfg):
+@click.option('--resume_ckpt', required=False, type=click.Path(exists=True))
+def main(arch, train_data_dir, val_data_dir, ckpt_dir, log_dir, custom_model_cfg, custom_training_cfg, resume_ckpt):
     
         
     model_cfg = ezflow.config.get_cfg(cfg_path=custom_model_cfg, custom=True)
@@ -42,20 +43,32 @@ def main(arch, train_data_dir, val_data_dir, ckpt_dir, log_dir, custom_model_cfg
     training_cfg["TENSORBOARD_LOGGER"]["LOG_PATH"] = log_dir
 
     training_params = load_cfg_trainer_params(training_cfg)    
-        
+    
+    preprocessing = lambda x: x/255 if x.max()>1 else x
+
     ## data loaders
     train_dataset = MultiDatasets( (OptFlowRasterDataset(
-        os.path.join(train_data_dir, sub_folder)) for sub_folder in os.listdir(train_data_dir)))
-    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=1, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
+        os.path.join(train_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(train_data_dir))
+        )
+    train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     train_dataloader = train_dataloader
 
     valid_dataset = MultiDatasets( (OptFlowRasterDataset(
-        os.path.join(val_data_dir, sub_folder)) for sub_folder in os.listdir(val_data_dir)))    
+        os.path.join(val_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(val_data_dir))
+        )    
     valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     valid_dataloader = valid_dataloader
 
     light_model = light_model.cuda()
     light_model.sample_val = next(iter(valid_dataloader))
+
+    # Check if resume training
+    if resume_ckpt:
+        if os.path.isfile(resume_ckpt):
+            training_params["resume_from_checkpoint"] = resume_ckpt
+        else:
+            list_of_ckpt = [os.path.join(resume_ckpt, f) for f in os.listdir(resume_ckpt)]
+            training_params["resume_from_checkpoint"] = max(list_of_ckpt, key=os.path.getctime)
 
     trainer = pl.Trainer(**training_params)
 
