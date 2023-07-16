@@ -10,7 +10,12 @@ import rasterio as rio
 import torch
 from torch.utils.data import Dataset
 from LxGeoPyLibs.vision.image_transformation import Trans_Identity
-import multiprocessing 
+import multiprocessing
+from LxGeoPyLibs.dataset.raster_dataset import RasterDataset
+from LxGeoPyLibs.dataset.patchified_dataset import PatchifiedDataset
+from LxGeoPyLibs.dataset.common_interfaces import BoundedDataset, PixelizedDataset
+import pygeos
+import numpy as np
 
 class RasterRegister(dict):
 
@@ -25,13 +30,15 @@ class RasterRegister(dict):
 rasters_map=RasterRegister()
 lock = multiprocessing.Lock()
 
-class OptFlowRasterDataset(Dataset):
+class OptFlowRasterDataset(Dataset, PixelizedDataset, BoundedDataset):
     
     READ_RETRY_COUNT = 4
 
     def __init__(self, image1_path=None, image2_path=None, optflow_path=None,
-                 augmentation_transforms=None,preprocessing=None, patch_size=(256,256), patch_overlap=(100,100)):
+                 augmentation_transforms=None,preprocessing=None, pixel_patch_size=(512,512), pixel_patch_overlap=100,
+                 weighted_flow=True):
         
+        self.weighted_flow=weighted_flow
         self.images_path_list=[]
         if os.path.isdir(image1_path):
             in_dir=image1_path
@@ -48,39 +55,26 @@ class OptFlowRasterDataset(Dataset):
         else:
             self.augmentation_transforms = augmentation_transforms
         
-        rasters_map.update({
-            self.image1_path: rio.open(self.image1_path),
-            self.image2_path: rio.open(self.image2_path),
-            self.optflow_path: rio.open(self.optflow_path)
+        self.datasets_map = dict()
+        self.datasets_map.update({
+            "image1": RasterDataset(self.image1_path),
+            "image2": RasterDataset(self.image2_path),
+            "optflow": RasterDataset(self.optflow_path),
             })
+        common_aoi = pygeos.set_operations.intersection_all([c_raster_dst.bounds_geom for c_raster_dst in self.datasets_map.values()])
+        BoundedDataset.__init__(self, common_aoi)
+        PixelizedDataset.__init__(self, self.datasets_map["image1"].rio_dataset().transform[0], -self.datasets_map["image1"].rio_dataset().transform[4])
         
-        raster_shapes = [dst.shape for dst in [rasters_map[path] for path in self.images_path_list]]
-        assert len(set(raster_shapes)) == 1, "Rasters have different shapes!" 
-        
-        self.Y_size, self.X_size = raster_shapes[0]                
+        #for c_raster_dst in datasets_map.values():
+        #    c_raster_dst.setup_patch_per_pixel(pixel_patch_size, pixel_patch_overlap, common_aoi)
+                       
         self.preprocessing=preprocessing
         self.is_setup=False
-        self.setup(patch_size, patch_overlap)
-                
+        self.setup_patch_per_pixel(pixel_patch_size, pixel_patch_overlap, common_aoi)
     
-    def setup(self, patch_size, patch_overlap):
-        """
-        Setup patch loading settings
-        """
-        self.patch_size = patch_size
-        self.patch_overlap = patch_overlap
-        
-        self.window_x_starts = list(range(0, self.X_size-self.patch_size[0], self.patch_overlap[0]))
-        if (self.X_size-1)%self.patch_size[0] != 0: self.window_x_starts.append(self.X_size-1-self.patch_size[0])
-        self.window_y_starts = list(range(0, self.Y_size-self.patch_size[1], self.patch_overlap[1]))
-        if (self.Y_size-1)%self.patch_size[1] != 0: self.window_y_starts.append(self.Y_size-1-self.patch_size[1])
-        self.is_setup=True
-
     def __len__(self):
         assert self.is_setup, "Dataset is not set up!"
-        x_count = len(self.window_x_starts)
-        y_count = len(self.window_y_starts)
-        return x_count*y_count*len(self.augmentation_transforms)
+        return PatchifiedDataset.__len__(self)*len(self.augmentation_transforms)
     
     def __getitem__(self, idx):
         
@@ -88,22 +82,23 @@ class OptFlowRasterDataset(Dataset):
         window_idx = idx // (len(self.augmentation_transforms))
         transform_idx = idx % (len(self.augmentation_transforms))
         
-        window_x_start = self.window_x_starts[window_idx//len(self.window_y_starts)]
-        window_y_start = self.window_y_starts[window_idx%len(self.window_y_starts)]
-        c_window = rio.windows.Window(window_x_start, window_y_start, *self.patch_size )
+        c_window = PatchifiedDataset.__getitem__(self, window_idx)
         
         lock.acquire()
         for _ in range(self.READ_RETRY_COUNT):
             try:
-                img1 = rasters_map[self.image1_path].read(window=c_window) 
-                img2 = rasters_map[self.image2_path].read(window=c_window)
-                flow = rasters_map[self.optflow_path].read(window=c_window)
+                img1 = self.datasets_map["image1"]._load_padded_raster_window(window_geom=c_window, patch_size=self.pixel_patch_size) 
+                img2 = self.datasets_map["image2"]._load_padded_raster_window(window_geom=c_window, patch_size=self.pixel_patch_size)
+                flow = self.datasets_map["optflow"]._load_padded_raster_window(window_geom=c_window, patch_size=self.pixel_patch_size)
                 break
             except rio.errors.RasterioIOError as e:
                 _logger.error(f"Unable to read window {c_window}")
                 raise Exception("Dataset loading error")
         lock.release()
         
+        if self.weighted_flow and flow.shape[0]<3:
+            flow = np.stack([flow[0], flow[1], np.ones_like(flow[0])])
+
         c_trans = self.augmentation_transforms[transform_idx]
         img1, flow, _ = c_trans(img1, flow)
         img2, _, _ = c_trans(img2, flow)
@@ -116,17 +111,17 @@ class OptFlowRasterDataset(Dataset):
         img2 = torch.from_numpy(img2).float()
         flow = torch.from_numpy(flow).float()
         
+        
         # valid_mask to flow
         flow = torch.cat((flow, img1), dim=0)
 
-        return (img1, img2), flow
+        return (img2, img1), flow
 
 
 def worker_init_fn(worker_id):
+    from LxGeoPyLibs.dataset.raster_dataset import rasters_map
     w_multi_dst = torch.utils.data.get_worker_info().dataset.datasets
     for w_dst in w_multi_dst:
-        rasters_map.update({
-            w_dst.image1_path: rio.open(w_dst.image1_path),
-            w_dst.image2_path: rio.open(w_dst.image2_path),
-            w_dst.optflow_path: rio.open(w_dst.optflow_path)
-        })
+        for component_raster in w_dst.datasets_map.values():
+            rasters_map.update({component_raster.image_path: rio.open(component_raster.image_path)})
+        
