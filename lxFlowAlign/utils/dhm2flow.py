@@ -36,8 +36,19 @@ class DhmFlowModel(CallableModel):
             return out_image
         else:
             assert image.shape[0]==2, f"Input image of shape {image.shape} has {image.shape[0]} bands when expected 2!"
+            fl_vector = np.array([self.x_flow, self.y_flow])
             #out_image = image[0]*self.x_res/self.x_flow + image[1]*self.y_res/self.y_flow
-            out_image = self.x_res * image[0]/self.x_flow + self.y_res * image[1]/self.y_flow
+            #out_image = self.x_res * image[0]*self.x_flow + self.y_res * image[1]*self.y_flow
+            
+            #measurable_image = np.stack( [image[0]*self.x_res/ self.x_flow, image[1]*self.y_res/self.y_flow] )
+            """
+            measurable_image = np.stack( [image[0]*self.x_res, image[1]*self.y_res] )
+            norm_measurable_image = np.linalg.norm(measurable_image, axis=0) 
+            norm_fl_vector = np.linalg.norm(fl_vector)
+
+            out_image = norm_measurable_image / norm_fl_vector"""
+            out_image = ((abs(self.x_flow)*image[0]*self.x_res/ self.x_flow) + (abs(self.y_flow)*image[1]*self.y_res/ self.y_flow)) / (abs(self.x_flow)+abs(self.y_flow))
+            
             out_image = np.expand_dims(out_image, 0)
             return out_image
         
