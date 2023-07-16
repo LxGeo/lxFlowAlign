@@ -53,11 +53,12 @@ def non_uniform_disalign_dataset(in_gdf, percentage=0.1):
 
 
 if __name__ == "__main__":
-    input_shapefile_1 = "C:/DATA_SANDBOX/lxFlowAlign/data/MOURMELON/OSM_data/MOURMELON_osm_polys_polygons.shp"
-    output_shapefile_1 = "C:/DATA_SANDBOX/lxFlowAlign/data/MOURMELON/OSM_data/disaligned_MOURMELON_osm_polys_polygons.shp"
+    input_shapefile_1 = "C:/DATA_SANDBOX/got_backup/mcherif/Documents/DATA_SANDBOX/Alignment_Project/DATA_SANDBOX/marrakech_stereo_dhm_plus_external/external/google/0/google/PredBuilding.shp"
+    output_shapefile_1 = "C:/DATA_SANDBOX/got_backup/mcherif/Documents/DATA_SANDBOX/Alignment_Project/DATA_SANDBOX/marrakech_stereo_dhm_plus_external/external/google/0/google/dis_PredBuilding.shp"
     in_gdf_1 = gpd.read_file(input_shapefile_1)
     
-    out_gdf = disalign_dataset(in_gdf_1)
+    out_gdf = non_uniform_disalign_dataset(in_gdf_1)
+    out_gdf=out_gdf.assign(s=(out_gdf["disp_x"] **2 + out_gdf["disp_y"]**2)).sort_values(by='s').drop('s', axis=1)
     
-    #in_gdf_1.to_file(output_shapefile_1)
+    out_gdf.to_file(output_shapefile_1)
         
