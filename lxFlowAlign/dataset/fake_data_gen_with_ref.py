@@ -83,9 +83,11 @@ def main(input_shp_path, input_ortho_path, output_dir, extents):
         out_image, out_transform = rio.mask.mask(ortho_dst, [mask_shape], crop=True, filled=True)
         c_profile = ortho_dst.profile.copy(); c_profile.update({"transform": out_transform})
         c_profile.update({"height": out_image.shape[-2], "width":out_image.shape[-1] })
+        out_image[:, (out_image[0]==0) & (out_image[1]==0) & (out_image[2]==0)] = np.array([255,0,0])[:,np.newaxis]
         ortho_raster_1 = (out_image, c_profile)
 
     bin_raster_2, flow = generate_fake_data(input_gdf, raster_extents)
+    bin_raster_2=(bin_raster_2[0]*255, bin_raster_2[1])
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     
