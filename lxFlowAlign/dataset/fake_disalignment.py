@@ -34,6 +34,20 @@ def disalign_dataset(in_gdf, transform_geoms=True):
     if transform_geoms:
         gdf.geometry = gdf.apply(lambda row: translate(row.geometry, row.disp_x, row.disp_y), axis=1)
     return gdf
+
+from numpy.random import default_rng
+
+def non_uniform_disalign_dataset(in_gdf, percentage=0.1):
+
+    gdf = disalign_dataset(in_gdf, transform_geoms=False)
+    rng = default_rng()
+    random_indices = rng.choice(len(gdf), size=int(len(gdf)*percentage), replace=False)
+    random_magnitudes = abs(np.random.normal(0, 10, len(random_indices)))    
+    
+    norm_vector_mag = np.sqrt(gdf["disp_x"] **2 + gdf["disp_y"]**2)
+
+    gdf.loc[random_indices, "disp_x"] /= norm_vector_mag.loc[random_indices] / random_magnitudes
+    gdf.loc[random_indices, "disp_y"] /= norm_vector_mag.loc[random_indices] / random_magnitudes
     gdf.geometry = gdf.apply(lambda row: translate(row.geometry, row.disp_x, row.disp_y), axis=1)
     return gdf
 
