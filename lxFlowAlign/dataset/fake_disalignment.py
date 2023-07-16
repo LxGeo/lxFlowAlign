@@ -11,14 +11,14 @@ import geopandas as gpd
 import numpy as np
 from shapely.affinity import translate
 
-def disalign_dataset(in_gdf):
+def disalign_dataset(in_gdf, transform_geoms=True):
     
     gdf = in_gdf.copy()
     
     gdf["disp_x"]=-0.5
     gdf["disp_y"]=-0.5
     
-    distance_noise_map = { 50: 3, 20:1, 15:1, 10:0.1}
+    distance_noise_map = { 50: 10, 20:5, 15:3, 1:1}
 
     for dist_th, max_noise in distance_noise_map.items():
         
@@ -31,6 +31,9 @@ def disalign_dataset(in_gdf):
         gdf["disp_x"] += comp_disp_x[w.component_labels]
         gdf["disp_y"] += comp_disp_y[w.component_labels]
     
+    if transform_geoms:
+        gdf.geometry = gdf.apply(lambda row: translate(row.geometry, row.disp_x, row.disp_y), axis=1)
+    return gdf
     gdf.geometry = gdf.apply(lambda row: translate(row.geometry, row.disp_x, row.disp_y), axis=1)
     return gdf
 
