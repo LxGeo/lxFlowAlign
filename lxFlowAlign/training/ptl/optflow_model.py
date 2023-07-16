@@ -23,8 +23,8 @@ class lightningOptFlowModel(pl.LightningModule):
         super(lightningOptFlowModel, self).__init__()
         self.save_hyperparameters()
 
-        self.arch=self.hparams.arch
-        self.cfg = self.hparams.cfg
+        self.arch=arch
+        self.cfg=cfg
         self.in_channels = 3# self.cfg.ENCODER.FEATURE.IN_CHANNELS or self.cfg.ENCODER.IN_CHANNELS
         
         self.model = build_model(self.arch, cfg=self.cfg)
@@ -44,7 +44,7 @@ class lightningOptFlowModel(pl.LightningModule):
         x, y = train_batch
         x = [im[:,:self.in_channels,:,:] for im in x]
         # remove valid band if needed
-        if not self.cfg.CRITERION.CUSTOM:
+        if not self.cfg.CRITERION.CUSTOM and not self.cfg.CRITERION.WEIGHTED_LABEL:
             y=y[:, :2, :, :]
         y_hat = self.forward(x)
         loss = self.loss_fn(y_hat, y)
@@ -64,6 +64,7 @@ class lightningOptFlowModel(pl.LightningModule):
     
     def predict_step(self, batch, batch_idx: int = None, dataloader_idx: int = 0):
         self.model.training = False
+        batch = [el.to(self.device) for el in batch]
         return self.forward(batch)
     
     def on_after_backward(self):
