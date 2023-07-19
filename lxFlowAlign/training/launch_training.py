@@ -8,7 +8,7 @@ Created on Wed Mar 16 12:58:41 2022
 import os
 import click
 import torch
-from lxFlowAlign.training.ptl.optflow_model import lightningOptFlowModel
+from lxFlowAlign.training.ptl.optflow_model import lightningOptFlowModel, lightningOptFlowModelUpdated
 from lxFlowAlign.training.ptl.trainer_parameter_loader import load_cfg_trainer_params
 import ezflow
 from ezflow.engine import get_training_cfg

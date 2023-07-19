@@ -6,6 +6,8 @@ Created on Wed Mar 16 11:49:21 2022
 """
 
 from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 import torch
 from LxGeoPyLibs.vision.plot.flow_plot import plot_quiver
 
@@ -138,9 +140,49 @@ class lightningOptFlowModel(pl.LightningModule):
             image_pair = [im.to(self.device) for im in image_pair]
             logits = self.forward(image_pair)            
             self.image_flow_grid(image_pair, gt_flow, logits)
+
+import sys
+sys.path.append("C:/DATA_SANDBOX/got_backup/mcherif/Documents/flownet2-pytorch/")
+import models, losses
+from utils import flow_utils, tools
+from dot import Dot
+
+class lightningOptFlowModelUpdated(lightningOptFlowModel, pl.LightningModule):
     
+    def __init__(self, *args, **kwargs):
+        
+        super(lightningOptFlowModel, self).__init__()
+        self.save_hyperparameters()
+        self.in_channels = 3
+        args = Dot()
+        args.fp16=False
+        args.rgb_max=1.0
+        self.model = models.FlowNet2CS(args)
+        self.loss_fn = losses.MultiScale(args)
     
+    def forward(self, image_pair):
+        block=torch.stack(image_pair).permute(1,2,0,3,4)
+        return self.model(block)    
     
-    
+    def training_step(self, train_batch, batch_idx):
+        x, y = train_batch
+        x = [im[:,:self.in_channels,:,:] for im in x]
+        y=y[:, :2, :, :]
+        y_hat = self.forward(x)
+        loss = self.loss_fn(y_hat, y)[0]
+        self.log("train_loss", loss, on_step=True, on_epoch=True)
+        return loss
+
+    def validation_step(self, val_batch, batch_idx):
+        x, y = val_batch
+        x = [im[:,:self.in_channels,:,:] for im in x]
+        y=y[:, :2, :, :]
+        y_hat = self.forward(x)
+        loss = self.loss_fn(y_hat, y)[0]
+        self.log("val_loss", loss, on_step=True, on_epoch=True,)
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-5)
+        return [optimizer], []
     
     
