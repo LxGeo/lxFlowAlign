@@ -19,7 +19,11 @@ from lxFlowAlign.dataset.ptl.optical_flow_dataset import OptFlowRasterDataset, w
 
 import pytorch_lightning as pl
 
-
+def preprocessing(x):
+    if x.max()>1:
+        return x/255
+    else:
+        return x
 
 @click.command()
 @click.argument('arch', type=click.Choice(list(ezflow.model_zoo._ModelZooConfigs.MODEL_NAME_TO_CONFIG.keys()), False))
@@ -44,17 +48,15 @@ def main(arch, train_data_dir, val_data_dir, ckpt_dir, log_dir, custom_model_cfg
 
     training_params = load_cfg_trainer_params(training_cfg)    
     
-    preprocessing = lambda x: x/255 if x.max()>1 else x
-
     ## data loaders
     train_dataset = MultiDatasets( (OptFlowRasterDataset(
-        os.path.join(train_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(train_data_dir))
+        os.path.join(train_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(train_data_dir) if not sub_folder.startswith("__"))
         )
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     train_dataloader = train_dataloader
 
     valid_dataset = MultiDatasets( (OptFlowRasterDataset(
-        os.path.join(val_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(val_data_dir))
+        os.path.join(val_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(val_data_dir) if not sub_folder.startswith("__"))
         )    
     valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     valid_dataloader = valid_dataloader
