@@ -128,8 +128,8 @@ class lightningOptFlowModel(pl.LightningModule):
             self.logger.experiment.add_image("img1_{}".format(i),norm(img1[i]),self.current_epoch)
             self.logger.experiment.add_image("img2_{}".format(i),norm(img2[i]),self.current_epoch)
             
-            self.logger.experiment.add_figure("flow_gt_{}".format(i),plot_quiver(gt_flow[i], spacing=10, scale=1, color="#ff44ff"),self.current_epoch)
-            self.logger.experiment.add_figure("flow_preds_{}".format(i),plot_quiver(preds[i].cpu(), spacing=10, scale=1, color="#ff44ff"),self.current_epoch)
+            self.logger.experiment.add_figure("flow_gt_{}".format(i),plot_quiver(gt_flow[i], spacing=5, scale=1, color="#ff44ff"),self.current_epoch)
+            self.logger.experiment.add_figure("flow_preds_{}".format(i),plot_quiver(preds[i].cpu(), spacing=5, scale=1, color="#ff44ff"),self.current_epoch)
 
     def validation_epoch_end(self, outputs):
         

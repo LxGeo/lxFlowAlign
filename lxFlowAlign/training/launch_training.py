@@ -15,15 +15,18 @@ from ezflow.engine import get_training_cfg
 from ezflow.models import get_default_model_cfg
 from ezflow.data.dataloader.device_dataloader import DeviceDataLoader
 from LxGeoPyLibs.dataset.multi_dataset import MultiDatasets
+from LxGeoPyLibs.dataset.common_interfaces import PreProcessedDataset, AugmentedDataset
 from lxFlowAlign.dataset.ptl.optical_flow_dataset import OptFlowRasterDataset, worker_init_fn
 
 import pytorch_lightning as pl
 
-def preprocessing(x):
-    if x.max()>1:
-        return x/255
-    else:
-        return x
+def preprocessing(item):
+    (i1,i2), flow = item
+    if i1.max()>1:
+        i1 = i1/255
+    if i2.max()>1:
+        i2 = i2/255        
+    return (i1,i2), flow
 
 @click.command()
 @click.argument('arch', type=click.Choice(list(ezflow.model_zoo._ModelZooConfigs.MODEL_NAME_TO_CONFIG.keys()), False))
@@ -50,14 +53,16 @@ def main(arch, train_data_dir, val_data_dir, ckpt_dir, log_dir, custom_model_cfg
     
     ## data loaders
     train_dataset = MultiDatasets( (OptFlowRasterDataset(
-        os.path.join(train_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(train_data_dir) if not sub_folder.startswith("__"))
+        os.path.join(train_data_dir, sub_folder), pixel_patch_overlap=100) for sub_folder in os.listdir(train_data_dir) if not sub_folder.startswith("__"))
         )
+    train_dataset = PreProcessedDataset(train_dataset, preprocessing)
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     train_dataloader = train_dataloader
 
     valid_dataset = MultiDatasets( (OptFlowRasterDataset(
-        os.path.join(val_data_dir, sub_folder), preprocessing=preprocessing) for sub_folder in os.listdir(val_data_dir) if not sub_folder.startswith("__"))
-        )    
+        os.path.join(val_data_dir, sub_folder), pixel_patch_overlap=100) for sub_folder in os.listdir(val_data_dir) if not sub_folder.startswith("__"))
+        )
+    valid_dataset = PreProcessedDataset(valid_dataset, preprocessing)
     valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=training_cfg.DATA.BATCH_SIZE, num_workers=0, shuffle=True, drop_last=True, worker_init_fn=worker_init_fn)
     valid_dataloader = valid_dataloader
 

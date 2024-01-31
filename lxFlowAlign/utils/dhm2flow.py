@@ -22,7 +22,7 @@ class DhmFlowModel(CallableModel):
         self.dhm2flow = dhm2flow
 
     def forward(self, batch_image):
-        batch_image = batch_image[0]
+        batch_image = batch_image#[0]
         batched_pred = []
         for idx in range(batch_image.shape[0]):
             batched_pred.append( self.forward_one(batch_image[idx]) )
@@ -81,7 +81,7 @@ def main(input_image, imd1, imd2, out_image, inverse):
 
     in_dataset = RasterDataset(input_image)
 
-    in_dataset.predict_to_file(out_image, transformer_model, tile_size=(256,256))
+    in_dataset.predict_to_file(out_image, transformer_model, tile_size=(1024,1024))
     
     
 

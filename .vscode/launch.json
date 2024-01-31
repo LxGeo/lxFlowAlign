@@ -1,0 +1,269 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["../DATA_SANDBOX/lxFlowAlign/proba_data/raw/Funchal/DL/ortho2/rooftop/build-poly.shp","../DATA_SANDBOX/lxFlowAlign/proba_data/raw/Funchal/DL/ortho2/rooftop/build-probas.tif","../DATA_SANDBOX/lxFlowAlign/proba_data/train_data/_Funchal_ortho2/"]
+        },
+        {
+            "name": "dhm2flow_inv",
+            "type": "python",
+            "request": "launch",
+            "module": "lxFlowAlign.utils.dhm2flow",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["-i", "/mnt/disk3/mcherif/Documents/DATA_SANDBOX/Alignment_Project/DATA_SANDBOX/paris_tristereo_dhm_plus_external/alignment2/approach4/PHR1A_acq20180326_del736ec042/disparity.tif",
+            "--imd1", "/mnt/disk3/mcherif/Documents/DATA_SANDBOX/Alignment_Project/DATA_SANDBOX/paris_tristereo_dhm_plus_external/extracted/PHR1A_acq20180326_del736ec042/geo_PHR1A_acq20180326_del736ec042.imd",
+            "--imd2", "/mnt/disk3/mcherif/Documents/DATA_SANDBOX/Alignment_Project/DATA_SANDBOX/paris_tristereo_dhm_plus_external/extracted/PHR1A_acq20180326_del1b382d54/geo_PHR1A_acq20180326_del1b382d54.imd",
+            "-o", "/mnt/disk3/mcherif/Documents/DATA_SANDBOX/Alignment_Project/DATA_SANDBOX/paris_tristereo_dhm_plus_external/alignment2/approach4/PHR1A_acq20180326_del736ec042/dhm.tif",
+            "-inv"
+             ]
+        },
+        {
+            "name": "dhm2flow",
+            "type": "python",
+            "request": "launch",
+            "module": "lxFlowAlign.utils.dhm2flow",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["-o", "C:/Users/macherif/Documents/temp_download/OSAKA/dhm.tif",
+            "--imd1", "//d2r2/projects/multiview_extraction/city/PRODUCTIVITY_TEST/OSAKA/projet_OSAKA/WV02-2023-03-30-01-52-34/WV02-PAN-2023-03-30.01-52-34/WV02-PAN-2023-03-30.01-52-34_PAN.imd",
+            "--imd2", "//d2r2/projects/multiview_extraction/city/PRODUCTIVITY_TEST/OSAKA/projet_OSAKA/WV02-2023-03-30-01-52-55/WV02-PAN-2023-03-30.01-52-55/WV02-PAN-2023-03-30.01-52-55_PAN.imd",
+            "-i", "C:/Users/macherif/Documents/temp_download/OSAKA/disparity_flowne_pred.tif",
+            "-inv"
+             ]
+        },
+        {
+            "name": "VCN",
+            "type": "python",
+            "request": "launch",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "1"
+            },
+            "module": "lxFlowAlign.training.launch_training",
+            "args": [
+                "VCN",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/train_data/",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/valid_data/",
+                "models/proba_fixed/VCN/",
+                "reports/proba_fixed/VCN",
+                "--custom_model_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_vcn.yaml",
+                "--custom_training_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "RAFT",
+            "type": "python",
+            "request": "launch",
+            "module": "lxFlowAlign.training.launch_training",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "3"
+            },
+            "args": [
+                "RAFT",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/train_data/",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/valid_data/",
+                "models/proba_fixed/RAFT/",
+                "reports/proba_fixed/RAFT",
+                "--custom_model_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_raft.yaml",
+                "--custom_training_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "PWCNet",
+            "type": "python",
+            "request": "launch",
+            "env": {
+                //"CUDA_VISIBLE_DEVICES": "2"
+            },
+            "module": "lxFlowAlign.training.launch_training",
+            "args": [
+                "PWCNet",
+                "../DATA_SANDBOX/lxFlowAlign/data/faults/train_data/",
+                "../DATA_SANDBOX/lxFlowAlign/data/faults/valid_data/",
+                "models/thesis/faults/PWCNet_disp15/",
+                "reports/thesis/faults/PWCNet_disp15/",
+                "--custom_model_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_pwcnet.yaml",
+                "--custom_training_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "PWCNetLarge",
+            "type": "python",
+            "request": "launch",
+            "env": {
+                //"CUDA_VISIBLE_DEVICES": "2"
+            },
+            "module": "lxFlowAlign.training.launch_training",
+            "args": [
+                "PWCNet",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/train_data/",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/valid_data/",
+                "models/thesis/PWCNet_large/",
+                "reports/thesis/PWCNet_large/",
+                "--custom_model_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_pwcnet_large.yaml",
+                "--custom_training_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "FlowNetS",
+            "type": "python",
+            "request": "launch",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "module": "lxFlowAlign.training.launch_training",
+            "args": [
+                "FlowNetS",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/train_data/",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/valid_data/",
+                "models/proba_fixed/FlowNetS/",
+                "reports/proba_fixed/FlowNetS",
+                "--custom_model_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_flownet_s.yaml",
+                "--custom_training_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "FlowNetC",
+            "type": "python",
+            "request": "launch",
+            "module": "lxFlowAlign.training.launch_training",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "args": [
+                "FlowNetC",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/train_data/",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/valid_data/",
+                "models/thesis/FlowNetC_disp15/",
+                "reports/thesis/FlowNetC_disp15/",
+                "--custom_model_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_flownet_c.yaml",
+                "--custom_training_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml",
+                //"--resume_ckpt",
+                //"models/thesis/FlowNetC/"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "FlowNet2",
+            "type": "python",
+            "request": "launch",
+            "module": "lxFlowAlign.training.launch_training",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0"
+            },
+            "args": [
+                "FlowNetC",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/train_data/",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/valid_data/",
+                "models/thesis/FlowNet2CS/",
+                "reports/thesis/FlowNet2CS/",
+                "--custom_model_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_flownet_c.yaml",
+                "--custom_training_cfg",
+                "../DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml",
+                //"--resume_ckpt",
+                //"models/thesis/FlowNetC/"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "DICL",
+            "type": "python",
+            "request": "launch",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "2"
+            },
+            "module": "lxFlowAlign.training.launch_training",
+            "args": [
+                "DICL",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/train_data/",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/valid_data/",
+                "models/proba_fixed/DICL/",
+                "reports/proba_fixed/DICL",
+                "--custom_model_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_dicl.yaml",
+                "--custom_training_cfg",
+                "~/Documents/DATA_SANDBOX/lxFlowAlign/proba_data/configs/trainers/base.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "PWCNetDHM",
+            "type": "python",
+            "request": "launch",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "3"
+            },
+            "module": "lxFlowAlign.training.launch_training",
+            "args": [
+                "PWCNet",
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/train_data/",
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/valid_data/",
+                "models/proba_fixed/PWCNet/",
+                "reports/proba_fixed/PWCNet",
+                "--custom_model_cfg",
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/configs/models/custom_pwcnet.yaml",
+                "--custom_training_cfg",
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/configs/trainers/base.yaml"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT": "2"}
+        },
+        {
+            "name": "dhm2flow",
+            "type": "python",
+            "request": "launch",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "3"
+            },
+            "module": "lxFlowAlign.utils.dhm2flow",
+            "args": [
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/train_data/funchal/dhm.tif",
+                "--im1_imd",
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/train_data/funchal/imd1.imd",
+                "--im2_imd",
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/train_data/funchal/imd2.imd",
+                "--out_flow",
+                "~/Documents/DATA_SANDBOX/ORTHOSDHM/data/train_data/funchal/flow.tif"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {"PYDEVD_WARN_SLOW_RESOLVE_TIMEOUT": "2"}
+        }
+    ]
+}

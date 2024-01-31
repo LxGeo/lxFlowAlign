@@ -1,0 +1,20 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "module": "lxFlowAlign.training.launch_training",
+            "args": ["FlowNetC", "~/Documents/DATA_SANDBOX/lxFlowAlign/data/train_data/", "~/Documents/DATA_SANDBOX/lxFlowAlign/data/valid_data/",
+                 "models/FlowNetC/", "reports/FlowNetC",
+                 "--custom_model_cfg", "~/Documents/DATA_SANDBOX/lxFlowAlign/data/configs/models/custom_flownet_c.yaml",
+                 "--custom_training_cfg", "~/Documents/DATA_SANDBOX/lxFlowAlign/data/configs/trainers/base.yaml"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

@@ -19,7 +19,7 @@ from functools import partial
 
 class temp_model(lightningOptFlowModel, CallableModel):
     def __init__(self, **kwargs):
-        CallableModel.__init__(self, bs=8)
+        CallableModel.__init__(self, bs=24)
         lightningOptFlowModel.__init__(self, **kwargs)
 
 @click.command()
@@ -47,9 +47,10 @@ def proba_to_oneHotLabel_callable(x):
 if __name__ == "__main__":
     #main()
     
-    mdl_path = "./models/thesis/FlowNetC_disp15/epoch=197-step=43956.ckpt"
+    #mdl_path = "./models/thesis/FlowNetC_disp15/epoch=197-step=43956.ckpt"
+    mdl_path = "./models/thesis/PWCNet_large/epoch=38-step=25974.ckpt"
     #model_cfg = ezflow.config.get_cfg(cfg_path="../DATA_SANDBOX/lxFlowAlign/proba_data/configs/models/custom_flownet_c.yaml", custom=True)
-    mdl = temp_model.load_from_checkpoint(mdl_path)
+    mdl = temp_model.load_from_checkpoint(mdl_path, strict=False)
     mdl = mdl.cuda()
 
     #in_raster_path = "/home/mcherif/Documents/DATA_SANDBOX/Alignment_Project/DATA_SANDBOX/BRAGANCA/DL/ortho1/rooftop/build-probas.tif"
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     #in_dataset = RasterWithRefsDataset(in_raster_path, OrderedDict(im2=in_raster_path2),preprocessing=proba_to_oneHotLabel_callable, ref_preprocessing=defaultdict(im2=proba_to_oneHotLabel_callable))
     
     
-    datasets_def = OrderedDict()
+    """datasets_def = OrderedDict()
     datasets_def["vector1"]= {
             "dataset_type":RasterizedVectorDataset,
             "vector_path":"C:/DATA_SANDBOX/Alignment_Project/PerfectGT/Ethiopia_Addis_Ababa_1_A_Neo/h_Ethiopia_Addis_Ababa_1_A_kaw.shp",
@@ -79,23 +80,23 @@ if __name__ == "__main__":
             #"preprocessing":lambda x:x/255,
             "gsd":0.3, "pixel_patch_size": (512,512), "pixel_patch_overlap":100
             }    
-    in_dataset = HeteroDataset(datasets_def, bounds_geom=VectorDataset(datasets_def["vector2"]["vector_path"]).bounds_geom)
+    in_dataset = HeteroDataset(datasets_def, bounds_geom=VectorDataset(datasets_def["vector2"]["vector_path"]).bounds_geom)"""
     
     
-    """datasets_def = OrderedDict()
+    datasets_def = OrderedDict()
     datasets_def["raster1"]= {
             "dataset_type":RasterDataset,
             "preprocessing":lambda x:x/255,
-            "image_path":"//cherif/DATA_SANDBOX/Alignment_Project/PerfectGT/India_Mumbai_A_Neo/preds/probas.tif",
+            "image_path":"//d2r2/projects/multiview_extraction/city/PRODUCTIVITY_TEST/OSAKA/DL/WV02-2023-03-30-01-52-34/probas.tif",
             }
     datasets_def["raster2"]= {
             "dataset_type":RasterDataset,
             "preprocessing":lambda x:x/255,
-            "image_path":"//cherif/DATA_SANDBOX/Alignment_Project/PerfectGT/India_Mumbai_B_Neo/preds/probas.tif",
+            "image_path":"//d2r2/projects/multiview_extraction/city/PRODUCTIVITY_TEST/OSAKA/DL/WV02-2023-03-30-01-52-55/probas.tif",
             }
-    in_dataset = HeteroDataset(datasets_def, bounds_geom=RasterDataset(datasets_def["raster2"]["image_path"]).bounds_geom)"""
+    in_dataset = HeteroDataset(datasets_def, bounds_geom=RasterDataset(datasets_def["raster2"]["image_path"]).bounds_geom)
 
-    out_file_path = "C:/DATA_SANDBOX/Alignment_Project/alignment_results/lxFlowAlign/flownet/Ethiopia_Addis_Ababa_gt_v1tov2/disparity_flowne_pred.tif"
+    out_file_path = "C:/Users/macherif/Documents/temp_download/OSAKA/disparity_flowne_pred.tif"
     
     in_dataset.predict_to_file(out_file_path, mdl, (512,512))
     
